@@ -12,7 +12,7 @@ def generate_image(api_token, model, prompt, seed, steps, guidance, aspect_ratio
         if not api_token:
             return None, "<span style='color: red;'>API Token is required.</span>"
 
-        # Ensure seed, steps, etc. are valid
+        # Convert inputs to proper types
         try:
             seed = int(seed)
             steps = int(steps)
@@ -24,6 +24,7 @@ def generate_image(api_token, model, prompt, seed, steps, guidance, aspect_ratio
 
         # Set the API token securely
         os.environ["REPLICATE_API_TOKEN"] = api_token
+
         try:
             # Prepare input data for the model
             input_data = {
@@ -35,34 +36,32 @@ def generate_image(api_token, model, prompt, seed, steps, guidance, aspect_ratio
                 "safety_tolerance": safety_tolerance,
                 "interval": interval
             }
+
             # Create a prediction using the selected model
             output = replicate.run(model, input=input_data)
             if not output:
                 raise ValueError("Model did not return any output")
 
-            # The output should be the image URL directly
-            image_url = output
+            # Ensure the output is a string URL and not a list
+            image_url = output[0] if isinstance(output, list) else output
+
             response = requests.get(image_url)
             if response.status_code == 200:
-                # Create a directory to store images if it doesn't exist
                 os.makedirs('generated_images', exist_ok=True)
 
-                # Generate a unique filename using timestamp
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = f"generated_images/image_{timestamp}.png"
 
-                # Save the image
                 with open(filename, "wb") as file:
                     file.write(response.content)
 
-                # Open the saved image
-                with Image.open(filename) as saved_image:
-                    return saved_image, f"<span style='color: green;'>Image generated successfully using {model} and saved as {filename}!</span>"
+                return filename, f"<span style='color: green;'>Image generated successfully using {model} and saved as {filename}!</span>"
             else:
                 return None, f"<span style='color: red;'>Failed to download the image. Status code: {response.status_code}</span>"
+
         finally:
-            # Clear environment variable to avoid leakage
             os.environ["REPLICATE_API_TOKEN"] = ""
+
     except Exception as e:
         return None, f"<span style='color: red;'>An error occurred: {str(e)}</span>"
 
