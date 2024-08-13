@@ -3,7 +3,6 @@ import replicate
 import requests
 import os
 from datetime import datetime
-import io
 from PIL import Image
 
 # Set your Replicate API token as an environment variable
