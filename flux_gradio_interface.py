@@ -5,51 +5,46 @@ import os
 from datetime import datetime
 from PIL import Image
 
-# Set your Replicate API token as an environment variable
-os.environ["REPLICATE_API_TOKEN"] = "your-api-key"
 
-
-def generate_image(model, prompt, seed, steps, guidance, aspect_ratio, safety_tolerance, interval):
+def generate_image(api_token, model, prompt, seed, steps, guidance, aspect_ratio, safety_tolerance, interval):
     try:
+        # Validate API token
+        if not api_token:
+            return None, "<span style='color: red;'>API Token is required.</span>"
+
+        # Set the API token as an environment variable
+        os.environ["REPLICATE_API_TOKEN"] = api_token
+
+        # Prepare input data for the model
         input_data = {
             "prompt": prompt,
-            "seed": seed,
-            "steps": steps,
-            "guidance": guidance,
+            "seed": int(seed),
+            "steps": int(steps),
+            "guidance": float(guidance),
             "aspect_ratio": aspect_ratio,
-            "safety_tolerance": safety_tolerance,
-            "interval": interval
+            "safety_tolerance": int(safety_tolerance),
+            "interval": float(interval)
         }
-
         # Create a prediction using the selected model
-        output = replicate.run(
-            model,
-            input=input_data
-        )
+        output = replicate.run(model, input=input_data)
 
         # The output should be the image URL directly
         image_url = output
-
         response = requests.get(image_url)
         if response.status_code == 200:
             # Create a directory to store images if it doesn't exist
             os.makedirs('generated_images', exist_ok=True)
-
             # Generate a unique filename using timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"generated_images/image_{timestamp}.png"
-
             # Save the image
             with open(filename, "wb") as file:
                 file.write(response.content)
-
             # Open the saved image
             saved_image = Image.open(filename)
-
             return saved_image, f"<span style='color: green;'>Image generated successfully using {model} and saved as {filename}!</span>"
         else:
             return None, f"<span style='color: red;'>Failed to download the image. Status code: {response.status_code}</span>"
-
     except Exception as e:
         return None, f"<span style='color: red;'>An error occurred: {str(e)}</span>"
 
@@ -57,12 +52,13 @@ def generate_image(model, prompt, seed, steps, guidance, aspect_ratio, safety_to
 iface = gr.Interface(
     fn=generate_image,
     inputs=[
+        gr.Textbox(label="API Token", placeholder="Enter your Replicate API Token", type="password"),
         gr.Dropdown(
             ["black-forest-labs/flux-dev", "black-forest-labs/flux-pro", "black-forest-labs/flux-schnell"],
             label="Model",
             value="black-forest-labs/flux-pro"
         ),
-        gr.Textbox(label="Prompt"),
+        gr.Textbox(label="Prompt", placeholder="Describe the image you want to generate"),
         gr.Number(label="Seed", value=42),
         gr.Slider(1, 50, 25, step=1, label="Steps"),
         gr.Slider(2, 5, 3, step=0.1, label="Guidance"),
@@ -76,7 +72,7 @@ iface = gr.Interface(
     ],
     title="Flux Image Generator",
     description="Generate images using various Flux models. Adjust parameters to customize the output.",
+    theme="default",
     allow_flagging="never"
 )
-
 iface.launch(allowed_paths=["."])  # This allows HTML in the output
