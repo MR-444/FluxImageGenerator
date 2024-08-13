@@ -1,6 +1,10 @@
 # Ignore .idea directory
 .idea/
 
+# and output directories
+flagged/
+generated_images/
+
 # Other files and directories to ignore
 __pycache__/
 *.pyc
