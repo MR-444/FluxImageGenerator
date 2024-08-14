@@ -1,4 +1,3 @@
-```markdown
 # Installation Guide
 
 ## Prerequisites
@@ -38,4 +37,3 @@ pip install -r requirements.txt
 ```
 
 This command will install all the packages listed in your `requirements.txt` file.
-```
