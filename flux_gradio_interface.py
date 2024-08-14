@@ -131,32 +131,25 @@ def generate_image(api_token, model, prompt, randomize, seed, steps, guidance, a
         api_token_error = handle_api_token(api_token)
         if api_token_error:
             return api_token_error
-
         # Randomize the seed if necessary
         if randomize:
             seed = generate_random_seed()
-
         # Optionally validate parameters
         param_error = validate_parameters(seed, steps, guidance, safety_tolerance, interval)
         if param_error:
             return param_error
-
         # Convert numeric parameters
         seed, steps, guidance, safety_tolerance, interval = convert_parameters(
             seed, steps, guidance, safety_tolerance, interval
         )
-
         # Prepare model input data
         input_data = prepare_input_data(prompt, seed, steps, guidance, aspect_ratio, safety_tolerance, interval)
-
         # Run the model
         output = run_model(api_token, model, input_data)
-
         # Handle the output and download the generated image
         image_url = output[0] if isinstance(output, list) else output
         filename = download_image(image_url)
         return success_message(model, filename)
-
     except ValueError as e:
         return error_message(f"Validation Error: {str(e)}")
     except requests.exceptions.RequestException as e:
@@ -167,6 +160,9 @@ def generate_image(api_token, model, prompt, randomize, seed, steps, guidance, a
         clear_api_token()
 
 
+# Initial random seed value for the Seed field
+initial_seed = generate_random_seed()
+
 iface = gr.Interface(
     fn=generate_image,
     inputs=[
@@ -175,7 +171,7 @@ iface = gr.Interface(
                     label="Model", value="black-forest-labs/flux-pro"),
         gr.Textbox(label="Prompt", placeholder="Describe the image you want to generate"),
         gr.Checkbox(label="Randomize", value=True),
-        gr.Number(label="Seed", value=42),
+        gr.Number(label="Seed", value=initial_seed),  # Use the generated random seed
         gr.Slider(SLIDER_STEPS_MIN, SLIDER_STEPS_MAX, SLIDER_STEPS_DEFAULT, step=1, label="Steps"),
         gr.Slider(SLIDER_GUIDANCE_MIN, SLIDER_GUIDANCE_MAX, SLIDER_GUIDANCE_DEFAULT, step=SLIDER_GUIDANCE_STEP,
                   label="Guidance"),
@@ -193,5 +189,4 @@ iface = gr.Interface(
     theme="default",
     allow_flagging="never"
 )
-
 iface.launch(allowed_paths=["."])  # This allows HTML in the output
