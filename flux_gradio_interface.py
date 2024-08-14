@@ -1,7 +1,6 @@
 import os
 import requests
 from datetime import datetime
-from PIL import Image
 import gradio as gr
 import replicate
 import random
@@ -131,9 +130,6 @@ def generate_image(api_token, model, prompt, randomize, seed, steps, guidance, a
         api_token_error = handle_api_token(api_token)
         if api_token_error:
             return api_token_error
-        # Randomize the seed if necessary
-        if randomize:
-            seed = generate_random_seed()
         # Optionally validate parameters
         param_error = validate_parameters(seed, steps, guidance, safety_tolerance, interval)
         if param_error:
@@ -170,8 +166,8 @@ iface = gr.Interface(
         gr.Dropdown(["black-forest-labs/flux-dev", "black-forest-labs/flux-pro", "black-forest-labs/flux-schnell"],
                     label="Model", value="black-forest-labs/flux-pro"),
         gr.Textbox(label="Prompt", placeholder="Describe the image you want to generate"),
-        gr.Checkbox(label="Randomize", value=True),
         gr.Number(label="Seed", value=initial_seed),  # Use the generated random seed
+        gr.Checkbox(label="Randomize", value=True),
         gr.Slider(SLIDER_STEPS_MIN, SLIDER_STEPS_MAX, SLIDER_STEPS_DEFAULT, step=1, label="Steps"),
         gr.Slider(SLIDER_GUIDANCE_MIN, SLIDER_GUIDANCE_MAX, SLIDER_GUIDANCE_DEFAULT, step=SLIDER_GUIDANCE_STEP,
                   label="Guidance"),
