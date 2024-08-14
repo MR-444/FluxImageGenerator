@@ -145,7 +145,11 @@ def generate_image(api_token, model, prompt, randomize, seed, steps, guidance, a
         # Handle the output and download the generated image
         image_url = output[0] if isinstance(output, list) else output
         filename = download_image(image_url)
-        return success_message(model, filename)
+
+        # Generate a new seed for the next image generation
+        new_seed = generate_random_seed()
+
+        return success_message(model, filename), new_seed  # Return the success message and new seed value
     except ValueError as e:
         return error_message(f"Validation Error: {str(e)}")
     except requests.exceptions.RequestException as e:
