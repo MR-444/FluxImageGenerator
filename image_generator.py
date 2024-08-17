@@ -1,4 +1,3 @@
-# image_generator.py
 import random
 import replicate
 import requests
