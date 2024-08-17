@@ -1,6 +1,11 @@
 import random
 import replicate
 import requests
+import json
+import io
+import os
+from PIL import Image, PngImagePlugin
+from datetime import datetime
 from api_handler import APIHandler
 from constants import (
     SEED_MAX_VALUE,
@@ -12,6 +17,8 @@ from constants import (
     SLIDER_SAFETY_MAX,
     SLIDER_INTERVAL_MIN,
     SLIDER_INTERVAL_MAX,
+    GENERATED_IMAGES_DIR,
+    TIMESTAMP_FORMAT
 )
 
 
@@ -52,7 +59,7 @@ class ImageGenerator:
             "seed": seed,
             "steps": steps,
             "guidance": guidance,
-            "aspect_ratio": aspect_ratio,  # Pass through as-is
+            "aspect_ratio": aspect_ratio,
             "safety_tolerance": safety_tolerance,
             "interval": interval
         }
@@ -72,6 +79,33 @@ class ImageGenerator:
         except Exception as e:
             raise ValueError(f"API Error: {str(e)}")
         return output
+
+    @staticmethod
+    def embed_metadata_in_image(image_data, metadata):
+        """Embed metadata into a PNG image stored in memory (image_data)"""
+        try:
+            # Open the image from the byte data
+            image = Image.open(io.BytesIO(image_data))
+
+            # Check if the image is in PNG format
+            if image.format != 'PNG':
+                raise ValueError('The image format is not PNG.')
+
+            # Create a dictionary of metadata (tEXt tag)
+            meta = PngImagePlugin.PngInfo()
+
+            # Add parameters as metadata
+            meta.add_text("parameters", metadata)
+
+            # Save image with the metadata to a new BytesIO object
+            output = io.BytesIO()
+            image.save(output, "PNG", pnginfo=meta)
+            output.seek(0)
+
+            return output
+
+        except Exception as e:
+            raise ValueError(f"Error embedding metadata: {str(e)}")
 
     @staticmethod
     def generate_image(api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio,
@@ -105,14 +139,45 @@ class ImageGenerator:
 
             # Handle the output and download the generated image
             image_url = output[0] if isinstance(output, list) else output
-            filename = APIHandler.download_image(image_url)
+            image_response = requests.get(image_url)
+            image_response.raise_for_status()
+
+            # Retrieve image data
+            img_data = image_response.content
+
+            # Prepare metadata
+            metadata = json.dumps({
+                "model": model,
+                "prompt": prompt,
+                "seed": seed,
+                "steps": steps,
+                "guidance": guidance,
+                "aspect_ratio": aspect_ratio,
+                "safety_tolerance": safety_tolerance,
+                "interval": interval
+            })
+
+            # Embed metadata into the image
+            img_with_metadata = ImageGenerator.embed_metadata_in_image(img_data, metadata)
+
+            # Ensure the directory for saving the image exists
+            os.makedirs(GENERATED_IMAGES_DIR, exist_ok=True)
+
+            # Generate the filename with the proper format
+            timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
+            filename_with_metadata = os.path.join(GENERATED_IMAGES_DIR, f'image_{timestamp}.png')
+
+            # Save the in-memory image to a file
+            with open(filename_with_metadata, 'wb') as f:
+                f.write(img_with_metadata.read())
 
             # Generate a new seed for the next image generation if randomize is checked
             new_seed = seed
             if randomize:
                 new_seed = ImageGenerator.generate_random_seed()
+
             # Return success message, image filename, new seed
-            return APIHandler.success_message(model, filename), filename, new_seed
+            return APIHandler.success_message(model, filename_with_metadata), filename_with_metadata, new_seed
 
         except ValueError as e:
             # Return validation error, None for image, current seed
