@@ -21,16 +21,6 @@ from constants import (
 # Initial random seed value for the Seed field
 initial_seed = ImageGenerator.generate_random_seed()
 
-def wrapper_generate_image(api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio, safety_tolerance,
-                           interval, state_seed):
-    # Call the generate_image function
-    result, new_seed = ImageGenerator.generate_image(
-        api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio, safety_tolerance, interval
-    )
-    # Update the state with the new seed
-    state_seed = new_seed if randomize else seed
-    return result, state_seed
-
 iface = gr.Interface(
     fn=ImageGenerator.generate_image,
     inputs=[
