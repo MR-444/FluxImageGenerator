@@ -1,4 +1,3 @@
-# main.py
 import gradio as gr
 from image_generator import ImageGenerator
 from constants import (
@@ -28,7 +27,7 @@ iface = gr.Interface(
         gr.Dropdown(["black-forest-labs/flux-dev", "black-forest-labs/flux-pro", "black-forest-labs/flux-schnell"],
                     label="Model", value="black-forest-labs/flux-pro"),
         gr.Textbox(label="Prompt", placeholder="Describe the image you want to generate"),
-        gr.Number(label="Seed", value=initial_seed),  # Use the generated random seed
+        gr.Number(label="Seed", value=initial_seed),  # Visible Seed input
         gr.Checkbox(label="Randomize", value=True),
         gr.Slider(SLIDER_STEPS_MIN, SLIDER_STEPS_MAX, SLIDER_STEPS_DEFAULT, step=1, label="Steps"),
         gr.Slider(SLIDER_GUIDANCE_MIN, SLIDER_GUIDANCE_MAX, SLIDER_GUIDANCE_DEFAULT, step=SLIDER_GUIDANCE_STEP,
@@ -40,8 +39,7 @@ iface = gr.Interface(
     ],
     outputs=[
         gr.HTML(label="Status"),  # To display the status message
-        gr.Image(label="Generated Image"),  # To display the generated image
-        gr.Number(label="Seed")  # To update the seed value
+        gr.Image(label="Generated Image")  # To display the generated image
     ],
     title="Flux Image Generator",
     description="Generate images using various Flux models. Adjust parameters to customize the output.",
