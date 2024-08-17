@@ -75,20 +75,22 @@ class ImageGenerator:
         return output
 
     @staticmethod
-    def generate_image(api_token, model, prompt, randomize, seed, steps, guidance, aspect_ratio,
+    def generate_image(api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio,
                        safety_tolerance, interval):
         try:
             # Handle the API Token validation and setting
             api_token_error = APIHandler.validate_api_token(api_token)
             if api_token_error:
-                return api_token_error
+                # Return error message, None for image, current seed
+                return api_token_error, None, seed
 
             APIHandler.set_api_token(api_token)
 
             # Optionally validate parameters
             param_error = ImageGenerator.validate_parameters(seed, steps, guidance, safety_tolerance, interval)
             if param_error:
-                return param_error
+                # Return parameter error, None for image, current seed
+                return param_error, None, seed
 
             # Convert numeric parameters
             seed, steps, guidance, safety_tolerance, interval = ImageGenerator.convert_parameters(
@@ -106,16 +108,21 @@ class ImageGenerator:
             image_url = output[0] if isinstance(output, list) else output
             filename = APIHandler.download_image(image_url)
 
-            # Generate a new seed for the next image generation
-            new_seed = ImageGenerator.generate_random_seed()
-            return APIHandler.success_message(model,
-                                              filename), new_seed  # Return the success message and new seed value
+            # Generate a new seed for the next image generation if randomize is checked
+            new_seed = seed
+            if randomize:
+                new_seed = ImageGenerator.generate_random_seed()
+            # Return success message, image filename, new seed
+            return APIHandler.success_message(model, filename), filename, new_seed
 
         except ValueError as e:
-            return APIHandler.error_message(f"Validation Error: {str(e)}")
+            # Return validation error, None for image, current seed
+            return APIHandler.error_message(f"Validation Error: {str(e)}"), None, seed
         except requests.exceptions.RequestException as e:
-            return APIHandler.error_message(f"Error downloading image: {str(e)}")
+            # Return request error, None for image, current seed
+            return APIHandler.error_message(f"Error downloading image: {str(e)}"), None, seed
         except Exception as e:
-            return APIHandler.error_message(f"An unknown error occurred: {str(e)}")
+            # Return unknown error, None for image, current seed
+            return APIHandler.error_message(f"An unknown error occurred: {str(e)}"), None, seed
         finally:
             APIHandler.clear_api_token()
