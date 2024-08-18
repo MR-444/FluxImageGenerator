@@ -119,7 +119,8 @@ class ImageGenerator:
             api_token_error = APIHandler.validate_api_token(api_token)
             if api_token_error:
                 # Return error message, None for image, current seed
-                return api_token_error, None, seed
+                _, error_message = api_token_error
+                return error_message, None, seed
 
             APIHandler.set_api_token(api_token)
 
@@ -127,7 +128,8 @@ class ImageGenerator:
             param_error = ImageGenerator.validate_parameters(seed, steps, guidance, safety_tolerance, interval)
             if param_error:
                 # Return parameter error, None for image, current seed
-                return param_error, None, seed
+                _, error_message = param_error
+                return error_message, None, seed
 
             # Convert numeric parameters
             seed, steps, guidance, safety_tolerance, interval = ImageGenerator.convert_parameters(
@@ -161,7 +163,7 @@ class ImageGenerator:
                 "interval": interval
             })
 
-            # Embed metadata into the image
+            # Embed metadata into the image (remove the mode parameter)
             img_with_metadata = ImageGenerator.embed_metadata_in_image(img_data, metadata)
 
             # Ensure the directory for saving the image exists
@@ -181,16 +183,21 @@ class ImageGenerator:
                 new_seed = ImageGenerator.generate_random_seed()
 
             # Return success message, image filename, new seed
-            return APIHandler.success_message(model, filename_with_metadata), filename_with_metadata, new_seed
+            _, success_message = APIHandler.success_message(model, filename_with_metadata)
+            return success_message, filename_with_metadata, new_seed
 
         except ValueError as e:
             # Return validation error, None for image, current seed
-            return APIHandler.error_message(f"Validation Error: {str(e)}"), None, seed
+            _, error_message = APIHandler.error_message(f"Validation Error: {str(e)}")
+            return error_message, None, seed
         except requests.exceptions.RequestException as e:
             # Return request error, None for image, current seed
-            return APIHandler.error_message(f"Error downloading image: {str(e)}"), None, seed
+            _, error_message = APIHandler.error_message(f"Error downloading image: {str(e)}")
+            return error_message, None, seed
         except Exception as e:
             # Return unknown error, None for image, current seed
-            return APIHandler.error_message(f"An unknown error occurred: {str(e)}"), None, seed
+            _, error_message = APIHandler.error_message(f"An unknown error occurred: {str(e)}")
+            return error_message, None, seed
         finally:
             APIHandler.clear_api_token()
+
