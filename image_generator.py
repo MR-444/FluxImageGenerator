@@ -87,9 +87,13 @@ class ImageGenerator:
             # Open the image from the byte data
             image = Image.open(io.BytesIO(image_data))
 
-            # Check if the image is in PNG format
+            # Convert image to PNG format if it isn't already
             if image.format != 'PNG':
-                raise ValueError('The image format is not PNG.')
+                image = image.convert('RGBA')  # Convert to RGBA (suitable for PNG)
+                png_image_data = io.BytesIO()
+                image.save(png_image_data, format='PNG')
+                png_image_data.seek(0)
+                image = Image.open(png_image_data)
 
             # Create a dictionary of metadata (tEXt tag)
             meta = PngImagePlugin.PngInfo()
@@ -169,7 +173,7 @@ class ImageGenerator:
 
             # Save the in-memory image to a file
             with open(filename_with_metadata, 'wb') as f:
-                f.write(img_with_metadata.read())
+                f.write(img_with_metadata.getvalue())
 
             # Generate a new seed for the next image generation if randomize is checked
             new_seed = seed
