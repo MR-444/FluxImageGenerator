@@ -9,15 +9,6 @@ from constants import (
 
 initial_seed = ImageGenerator.generate_random_seed()
 
-
-def wrapped_update_seed(api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio, safety_tolerance,
-                        interval, current_seed):
-    status, image, new_seed = ImageGenerator.generate_image(
-        api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio, safety_tolerance, interval
-    )
-    return status, image, new_seed
-
-
 with gr.Blocks(
         title="Flux Image Generator",
         theme="default"
@@ -67,9 +58,8 @@ with gr.Blocks(
                 """
             )
     generate_button.click(
-        fn=wrapped_update_seed,
-        inputs=[api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio, safety_tolerance, interval,
-                current_seed],
+        fn=ImageGenerator.generate_image,
+        inputs=[api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio, safety_tolerance, interval],
         outputs=[status_output, image_output, current_seed]
     ).then(
         fn=lambda x: x,
