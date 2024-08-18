@@ -1,3 +1,22 @@
+### Program Description: Flux Image Generator
+
+The **Flux Image Generator** is an interactive web application designed to help users generate unique images using the three Flux models. This application requires a Replicate API token, and you will need to cover any associated fees for using the Replicate service. Powered by Gradio, an intuitive Python library for creating interactive UI components, this application allows users to customize parameters and instantly see the results of their image generation requests.
+
+#### Features:
+
+- **Generate Custom Images**: Use different models like `flux-dev`, `flux-pro`, and `flux-schnell` to create a variety of images based on your descriptive prompts.
+- **Adjustable Parameters**: Fine-tune your image generation with adjustable parameters such as:
+  - **Steps**: Control the number of steps in the image generation process.
+  - **Guidance**: Adjust the strength of the adherence to the given prompt.
+  - **Aspect Ratio**: Choose from standard aspect ratios like 1:1, 16:9, and more.
+  - **Safety Tolerance**: Set the safety levels to filter the content.
+  - **Interval**: Modify the interval steps in the generation process.
+  - **Seed**: Utilize a specific seed for reproducible results or randomize it for different images.
+- **Integrated API Token Management**: Securely manage your API token for authentication with the model service.
+- **Instant Feedback**: See the generated image and status updates immediately after clicking the "Generate Image" button.
+- **Generated Image Metadata**: All the parameters used for generating the image are saved within the PNG file, allowing for easy reference and reproducibility.
+- **Portfolio Links**: Quick links to the image portfolios of the image artist "Silmas" on platforms like Civitai, DeviantArt, and Fotocommunity.
+
 # Installation Guide
 
 ## Prerequisites
