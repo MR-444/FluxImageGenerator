@@ -55,7 +55,7 @@ with gr.Blocks(
             status_output = gr.HTML(label="Status")
             gr.Markdown(
                 """
-                ### Image Portfolios of Silmas
+                ### Silmas image portfolios
                 - [Civitai](https://civitai.com/user/Silmas)
                 - [DeviantArt](https://www.deviantart.com/silmasone)
                 - [Fotocommunity](https://www.fotocommunity.de/user_photos/1505747)
