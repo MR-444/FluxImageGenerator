@@ -53,7 +53,19 @@ with gr.Blocks(
         with gr.Column():
             image_output = gr.Image(label="Generated Image")
             status_output = gr.HTML(label="Status")
-
+            gr.Markdown(
+                """
+                ### Image Portfolios of Silmas
+                - [Civitai](https://civitai.com/user/Silmas)
+                - [DeviantArt](https://www.deviantart.com/silmasone)
+                - [Fotocommunity](https://www.fotocommunity.de/user_photos/1505747)
+                """
+            )
+            gr.Markdown(
+                """
+                &copy; 2024 Silmas. All rights reserved.
+                """
+            )
     generate_button.click(
         fn=wrapped_update_seed,
         inputs=[api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio, safety_tolerance, interval,
