@@ -14,8 +14,8 @@ from constants import (
 initial_seed = ImageGenerator.generate_random_seed()
 
 
-def toggle_custom_resolution(aspect_ratio):
-    if aspect_ratio == "custom":
+def toggle_custom_resolution(ar):
+    if ar == "custom":
         return gr.update(visible=True), gr.update(visible=True)
     else:
         return gr.update(visible=False), gr.update(visible=False)
