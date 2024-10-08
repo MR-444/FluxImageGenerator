@@ -1,3 +1,5 @@
+# image_generator.py
+
 import random
 import replicate
 import requests
@@ -18,7 +20,13 @@ from constants import (
     SLIDER_INTERVAL_MIN,
     SLIDER_INTERVAL_MAX,
     GENERATED_IMAGES_DIR,
-    TIMESTAMP_FORMAT
+    TIMESTAMP_FORMAT,
+    IMAGE_WIDTH_MIN,
+    IMAGE_WIDTH_MAX,
+    IMAGE_HEIGHT_MIN,
+    IMAGE_HEIGHT_MAX,
+    SLIDER_OUTPUT_QUALITY_MIN,
+    SLIDER_OUTPUT_QUALITY_MAX
 )
 
 
@@ -30,7 +38,8 @@ class ImageGenerator:
         return random.randint(0, SEED_MAX_VALUE)
 
     @staticmethod
-    def validate_parameters(seed, steps, guidance, safety_tolerance, interval):
+    def validate_parameters(seed, steps, guidance, safety_tolerance, interval, width, height, output_quality,
+                            aspect_ratio):
         if seed < 0 or seed > SEED_MAX_VALUE:
             return APIHandler.error_message(f"Seed value must be between 0 and {SEED_MAX_VALUE}.")
         if steps < SLIDER_STEPS_MIN or steps > SLIDER_STEPS_MAX:
@@ -44,25 +53,49 @@ class ImageGenerator:
         if interval < SLIDER_INTERVAL_MIN or interval > SLIDER_INTERVAL_MAX:
             return APIHandler.error_message(
                 f"Interval must be between {SLIDER_INTERVAL_MIN} and {SLIDER_INTERVAL_MAX}.")
+        if width < IMAGE_WIDTH_MIN or width > IMAGE_WIDTH_MAX:
+            return APIHandler.error_message(
+                f"Width must be between {IMAGE_WIDTH_MIN} and {IMAGE_WIDTH_MAX}.")
+        if height < IMAGE_HEIGHT_MIN or height > IMAGE_HEIGHT_MAX:
+            return APIHandler.error_message(
+                f"Height must be between {IMAGE_HEIGHT_MIN} and {IMAGE_HEIGHT_MAX}.")
+        if width % 16 != 0:
+            return APIHandler.error_message("Width must be a multiple of 16.")
+        if height % 16 != 0:
+            return APIHandler.error_message("Height must be a multiple of 16.")
+        if output_quality < SLIDER_OUTPUT_QUALITY_MIN or output_quality > SLIDER_OUTPUT_QUALITY_MAX:
+            return APIHandler.error_message(
+                f"Output Quality must be between {SLIDER_OUTPUT_QUALITY_MIN} and {SLIDER_OUTPUT_QUALITY_MAX}.")
         return None
 
     @staticmethod
-    def convert_parameters(seed, steps, guidance, safety_tolerance, interval):
+    def convert_parameters(seed, steps, guidance, safety_tolerance, interval, width, height, output_quality):
         if seed > SEED_MAX_VALUE:
             raise ValueError(f"Seed value must be between 0 and {SEED_MAX_VALUE}.")
-        return int(seed), int(steps), float(guidance), int(safety_tolerance), float(interval)
+        return int(seed), int(steps), float(guidance), int(safety_tolerance), float(interval), int(width), int(
+            height), int(output_quality)
 
     @staticmethod
-    def prepare_input_data(prompt, seed, steps, guidance, aspect_ratio, safety_tolerance, interval):
-        return {
+    def prepare_input_data(prompt, seed, steps, guidance, aspect_ratio, width, height, safety_tolerance, interval,
+                           output_format, output_quality, prompt_upsampling):
+        input_data = {
             "prompt": prompt,
             "seed": seed,
             "steps": steps,
             "guidance": guidance,
             "aspect_ratio": aspect_ratio,
             "safety_tolerance": safety_tolerance,
-            "interval": interval
+            "interval": interval,
+            "output_format": output_format,
+            "output_quality": output_quality,
+            "prompt_upsampling": prompt_upsampling
         }
+        # Conditionally add width and height if aspect ratio is 'custom'
+        if aspect_ratio == "custom":
+            input_data["width"] = width
+            input_data["height"] = height
+
+        return input_data
 
     @staticmethod
     def run_model(api_token, model, input_data):
@@ -82,9 +115,7 @@ class ImageGenerator:
 
     @staticmethod
     def embed_metadata_in_image(image_data, metadata):
-        """Embed metadata into a PNG image stored in memory (image_data)"""
         try:
-            # Open the image from the byte data
             image = Image.open(io.BytesIO(image_data))
 
             # Convert image to PNG format if it isn't already
@@ -95,17 +126,11 @@ class ImageGenerator:
                 png_image_data.seek(0)
                 image = Image.open(png_image_data)
 
-            # Create a dictionary of metadata (tEXt tag)
             meta = PngImagePlugin.PngInfo()
-
-            # Add parameters as metadata
             meta.add_text("parameters", metadata)
-
-            # Save image with the metadata to a new BytesIO object
             output = io.BytesIO()
             image.save(output, "PNG", pnginfo=meta)
             output.seek(0)
-
             return output
 
         except Exception as e:
@@ -113,45 +138,36 @@ class ImageGenerator:
 
     @staticmethod
     def generate_image(api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio,
-                       safety_tolerance, interval):
+                       width, height, safety_tolerance, interval, output_format, output_quality, prompt_upsampling):
         try:
-            # Handle the API Token validation and setting
             api_token_error = APIHandler.validate_api_token(api_token)
             if api_token_error:
-                # Return error message, None for image, current seed
                 _, error_message = api_token_error
                 return error_message, None, seed
 
             APIHandler.set_api_token(api_token)
 
-            # Optionally validate parameters
-            param_error = ImageGenerator.validate_parameters(seed, steps, guidance, safety_tolerance, interval)
+            param_error = ImageGenerator.validate_parameters(seed, steps, guidance, safety_tolerance, interval, width,
+                                                             height, output_quality, aspect_ratio)
             if param_error:
-                # Return parameter error, None for image, current seed
                 _, error_message = param_error
                 return error_message, None, seed
 
-            # Convert numeric parameters
-            seed, steps, guidance, safety_tolerance, interval = ImageGenerator.convert_parameters(
-                seed, steps, guidance, safety_tolerance, interval
+            seed, steps, guidance, safety_tolerance, interval, width, height, output_quality = ImageGenerator.convert_parameters(
+                seed, steps, guidance, safety_tolerance, interval, width, height, output_quality
             )
 
-            # Prepare model input data
-            input_data = ImageGenerator.prepare_input_data(prompt, seed, steps, guidance, aspect_ratio,
-                                                           safety_tolerance, interval)
+            input_data = ImageGenerator.prepare_input_data(prompt, seed, steps, guidance, aspect_ratio, width, height,
+                                                           safety_tolerance, interval, output_format, output_quality,
+                                                           prompt_upsampling)
 
-            # Run the model
             output = ImageGenerator.run_model(api_token, model, input_data)
 
-            # Handle the output and download the generated image
             image_url = output[0] if isinstance(output, list) else output
             image_response = requests.get(image_url)
             image_response.raise_for_status()
-
-            # Retrieve image data
             img_data = image_response.content
 
-            # Prepare metadata
             metadata = json.dumps({
                 "model": model,
                 "prompt": prompt,
@@ -159,45 +175,43 @@ class ImageGenerator:
                 "steps": steps,
                 "guidance": guidance,
                 "aspect_ratio": aspect_ratio,
+                "width": width,
+                "height": height,
                 "safety_tolerance": safety_tolerance,
-                "interval": interval
+                "interval": interval,
+                "output_format": output_format,
+                "output_quality": output_quality,
+                "prompt_upsampling": prompt_upsampling
             })
 
-            # Embed metadata into the image (remove the mode parameter)
             img_with_metadata = ImageGenerator.embed_metadata_in_image(img_data, metadata)
 
-            # Ensure the directory for saving the image exists
             os.makedirs(GENERATED_IMAGES_DIR, exist_ok=True)
-
-            # Generate the filename with the proper format
             timestamp = datetime.now().strftime(TIMESTAMP_FORMAT)
-            filename_with_metadata = os.path.join(GENERATED_IMAGES_DIR, f'image_{timestamp}.png')
+            filename_with_metadata = os.path.join(GENERATED_IMAGES_DIR, f'image_{timestamp}.{output_format}')
 
             # Save the in-memory image to a file
             with open(filename_with_metadata, 'wb') as f:
-                f.write(img_with_metadata.getvalue())
+                if output_format == 'jpg':
+                    Image.open(img_with_metadata).convert('RGB').save(f, format='JPEG', quality=output_quality)
+                else:
+                    f.write(img_with_metadata.getvalue())
 
-            # Generate a new seed for the next image generation if randomize is checked
             new_seed = seed
             if randomize:
                 new_seed = ImageGenerator.generate_random_seed()
 
-            # Return success message, image filename, new seed
             _, success_message = APIHandler.success_message(model, filename_with_metadata)
             return success_message, filename_with_metadata, new_seed
 
         except ValueError as e:
-            # Return validation error, None for image, current seed
             _, error_message = APIHandler.error_message(f"Validation Error: {str(e)}")
             return error_message, None, seed
         except requests.exceptions.RequestException as e:
-            # Return request error, None for image, current seed
             _, error_message = APIHandler.error_message(f"Error downloading image: {str(e)}")
             return error_message, None, seed
         except Exception as e:
-            # Return unknown error, None for image, current seed
             _, error_message = APIHandler.error_message(f"An unknown error occurred: {str(e)}")
             return error_message, None, seed
         finally:
             APIHandler.clear_api_token()
-
