@@ -31,6 +31,7 @@ from constants import (
 
 
 class ImageGenerator:
+    VALID_ASPECT_RATIOS = {"1:1", "16:9", "2:3", "3:2", "4:5", "5:4", "9:16", "custom"}
 
     @staticmethod
     def generate_random_seed():
@@ -66,6 +67,8 @@ class ImageGenerator:
         if output_quality < SLIDER_OUTPUT_QUALITY_MIN or output_quality > SLIDER_OUTPUT_QUALITY_MAX:
             return APIHandler.error_message(
                 f"Output Quality must be between {SLIDER_OUTPUT_QUALITY_MIN} and {SLIDER_OUTPUT_QUALITY_MAX}.")
+        if aspect_ratio not in ImageGenerator.VALID_ASPECT_RATIOS:
+            return APIHandler.error_message("Aspect Ratio is not valid.")
         return None
 
     @staticmethod
