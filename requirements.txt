@@ -1,4 +1,4 @@
-gradio~=4.41.0
+gradio~=5.0.2
 replicate~=0.34.2
 requests~=2.32.3
 pillow~=10.4.0
