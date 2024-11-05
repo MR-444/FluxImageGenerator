@@ -1,6 +1,6 @@
 # main.py
 import gradio as gr
-from image_generator import ImageGenerator
+
 from constants import (
     SLIDER_STEPS_MIN, SLIDER_STEPS_MAX, SLIDER_STEPS_DEFAULT,
     SLIDER_GUIDANCE_MIN, SLIDER_GUIDANCE_MAX, SLIDER_GUIDANCE_STEP, SLIDER_GUIDANCE_DEFAULT,
@@ -10,6 +10,7 @@ from constants import (
     IMAGE_HEIGHT_MIN, IMAGE_HEIGHT_MAX, IMAGE_HEIGHT_DEFAULT,
     SLIDER_OUTPUT_QUALITY_MIN, SLIDER_OUTPUT_QUALITY_MAX, SLIDER_OUTPUT_QUALITY_DEFAULT
 )
+from image_generator import ImageGenerator
 
 initial_seed = ImageGenerator.generate_random_seed()
 

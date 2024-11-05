@@ -1,7 +1,9 @@
 # api_handler.py
 import os
-import requests
 from datetime import datetime
+
+import requests
+
 from constants import (
     ERROR_COLOR,
     SUCCESS_COLOR,

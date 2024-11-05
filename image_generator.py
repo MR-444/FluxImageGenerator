@@ -1,13 +1,15 @@
 # image_generator.py
 
+import io
+import json
+import os
 import random
+from datetime import datetime
+
 import replicate
 import requests
-import json
-import io
-import os
 from PIL import Image, PngImagePlugin
-from datetime import datetime
+
 from api_handler import APIHandler
 from constants import (
     SEED_MAX_VALUE,
