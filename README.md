@@ -96,14 +96,22 @@ Here’s an example of how the metadata might look for a generated image:
 
 ```json
 {
-    "model": "stable-diffusion-v1",
-    "prompt": "A futuristic cityscape with flying cars.",
-    "seed": 12345,
-    "steps": 50,
-    "guidance": 7.5,
-    "aspect_ratio": "16:9",
-    "safety_tolerance": 3,
-    "interval": 1.75
+  "model": "black-forest-labs/flux-1.1-pro-ultra",
+  "prompt": "A blonde woman with long hair stands in profile, wearing white thigh highs, a snug white crop top, and a vibrant red short skirt that complements her red baseball cap.",
+  "seed": 2344559566,
+  "steps": 25,
+  "guidance": 3.0,
+  "aspect_ratio": "2:3",
+  "width": 512,
+  "height": 512,
+  "safety_tolerance": 2,
+  "interval": 2.0,
+  "raw": true,
+  "output_format": "png",
+  "output_quality": 80,
+  "prompt_upsampling": false
 }
+
+
 ```
 
