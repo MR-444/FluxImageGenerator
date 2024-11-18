@@ -33,7 +33,7 @@ from constants import (
 
 
 class ImageGenerator:
-    VALID_ASPECT_RATIOS = {"1:1", "16:9", "2:3", "3:2", "4:5", "5:4", "9:16", "custom"}
+    VALID_ASPECT_RATIOS =     VALID_ASPECT_RATIOS = {"1:1", "16:9", "2:3", "3:2", "4:5", "5:4", "9:16", "21:9", "9:21", "3:4", "4:3", "custom"}
 
     @staticmethod
     def generate_random_seed():
@@ -42,7 +42,7 @@ class ImageGenerator:
 
     @staticmethod
     def validate_parameters(seed, steps, guidance, safety_tolerance, interval, width, height, output_quality,
-                            aspect_ratio):
+                            aspect_ratio, raw):
         if seed < 0 or seed > SEED_MAX_VALUE:
             return APIHandler.error_message(f"Seed value must be between 0 and {SEED_MAX_VALUE}.")
         if steps < SLIDER_STEPS_MIN or steps > SLIDER_STEPS_MAX:
@@ -71,6 +71,8 @@ class ImageGenerator:
                 f"Output Quality must be between {SLIDER_OUTPUT_QUALITY_MIN} and {SLIDER_OUTPUT_QUALITY_MAX}.")
         if aspect_ratio not in ImageGenerator.VALID_ASPECT_RATIOS:
             return APIHandler.error_message("Aspect Ratio is not valid.")
+        if not isinstance(raw, bool):
+            return APIHandler.error_message("Raw must be a boolean value.")
         return None
 
     @staticmethod
@@ -81,7 +83,7 @@ class ImageGenerator:
             height), int(output_quality)
 
     @staticmethod
-    def prepare_input_data(prompt, seed, steps, guidance, aspect_ratio, width, height, safety_tolerance, interval,
+    def prepare_input_data(prompt, seed, steps, guidance, aspect_ratio, width, height, safety_tolerance, interval, raw,
                            output_format, output_quality, prompt_upsampling):
         input_data = {
             "prompt": prompt,
@@ -90,6 +92,7 @@ class ImageGenerator:
             "guidance": guidance,
             "aspect_ratio": aspect_ratio,
             "safety_tolerance": safety_tolerance,
+            "raw": raw,
             "interval": interval,
             "output_format": output_format,
             "output_quality": output_quality,
@@ -143,7 +146,7 @@ class ImageGenerator:
 
     @staticmethod
     def generate_image(api_token, model, prompt, seed, randomize, steps, guidance, aspect_ratio,
-                       width, height, safety_tolerance, interval, output_format, output_quality, prompt_upsampling):
+                       width, height, safety_tolerance, interval, raw, output_format, output_quality, prompt_upsampling):
         try:
             api_token_error = APIHandler.validate_api_token(api_token)
             if api_token_error:
@@ -153,7 +156,7 @@ class ImageGenerator:
             APIHandler.set_api_token(api_token)
 
             param_error = ImageGenerator.validate_parameters(seed, steps, guidance, safety_tolerance, interval, width,
-                                                             height, output_quality, aspect_ratio)
+                                                             height, output_quality, aspect_ratio, raw)
             if param_error:
                 _, error_message = param_error
                 return error_message, None, seed
@@ -163,7 +166,7 @@ class ImageGenerator:
             )
 
             input_data = ImageGenerator.prepare_input_data(prompt, seed, steps, guidance, aspect_ratio, width, height,
-                                                           safety_tolerance, interval, output_format, output_quality,
+                                                           safety_tolerance, interval, raw, output_format, output_quality,
                                                            prompt_upsampling)
 
             output = ImageGenerator.run_model(api_token, model, input_data)
@@ -184,6 +187,7 @@ class ImageGenerator:
                 "height": height,
                 "safety_tolerance": safety_tolerance,
                 "interval": interval,
+                "raw": raw,
                 "output_format": output_format,
                 "output_quality": output_quality,
                 "prompt_upsampling": prompt_upsampling
