@@ -33,7 +33,7 @@ from constants import (
 
 
 class ImageGenerator:
-    VALID_ASPECT_RATIOS =     VALID_ASPECT_RATIOS = {"1:1", "16:9", "2:3", "3:2", "4:5", "5:4", "9:16", "21:9", "9:21", "3:4", "4:3", "custom"}
+    VALID_ASPECT_RATIOS = {"1:1", "16:9", "2:3", "3:2", "4:5", "5:4", "9:16", "21:9", "9:21", "3:4", "4:3", "custom"}
 
     @staticmethod
     def generate_random_seed():
